@@ -136,3 +136,27 @@ reasons:
    exist for exactly that — a staging area that mirrors, and eventually
    gets confirmed by, the contract's own pending-withdrawal state.
 
+## Non-custodial Stellar flow
+
+`POST /stellar/build` returns **unsigned** XDR for a treasury contract
+call. The client signs it with Freighter, a hardware wallet, or a passkey
+signer, then posts the signed envelope to `POST /stellar/submit`. The
+backend never receives, stores, or has the ability to reconstruct a
+user's secret key — see `src/stellar/stellar.service.ts`, which wraps
+`@stellar/stellar-sdk`'s `rpc.Server`, `Contract`, and
+`TransactionBuilder` to simulate, prepare, and (once signed) submit
+transactions against the deployed `treasury` contract.
+
+```
+ ┌──────────┐   1. build unsigned XDR    ┌─────────┐   3. simulate + prepare   ┌──────────────┐
+ │ Frontend │ ─────────────────────────▶ │ Backend │ ────────────────────────▶│ Soroban RPC   │
+ └──────────┘                            └─────────┘                          └──────────────┘
+      │  2. sign with Freighter /                │
+      │     hardware wallet / passkey             │
+      ▼                                            │
+ ┌──────────┐   4. submit signed XDR     ┌─────────┐   5. send to network      ┌──────────────┐
+ │ Frontend │ ─────────────────────────▶ │ Backend │ ────────────────────────▶│ treasury      │
+ └──────────┘                            └─────────┘                          │ contract      │
+                                                                                └──────────────┘
+```
+
