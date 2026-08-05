@@ -361,3 +361,15 @@ before starting the container for the first time. `.github/workflows/ci.yml`
 runs lint, unit tests, and a build against a throwaway Postgres service
 container on every push/PR.
 
+## Troubleshooting
+
+- **`PrismaClientInitializationError: Can't reach database server`** —
+  Postgres isn't running or `DATABASE_URL` is wrong; `docker compose up -d`
+  and check the port matches `.env`.
+- **GraphQL schema didn't update after editing a resolver** — restart
+  `start:dev`; `src/schema.gql` is regenerated on boot, not hot-reloaded
+  mid-request.
+- **`/stellar/build` fails with a simulation error** — usually means
+  `TREASURY_CONTRACT_ID` isn't set to a real deployed contract, or
+  `STELLAR_READ_SOURCE_ACCOUNT` isn't funded on the target network.
+
