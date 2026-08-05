@@ -80,3 +80,93 @@ CREATE TABLE "treasuries" (
     CONSTRAINT "treasuries_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "savings_goals" (
+    "id" TEXT NOT NULL,
+    "treasuryId" TEXT NOT NULL,
+    "contractGoalId" BIGINT,
+    "name" TEXT NOT NULL,
+    "category" "GoalCategory" NOT NULL DEFAULT 'OTHER',
+    "targetAmount" DECIMAL(20,7) NOT NULL,
+    "currentAmount" DECIMAL(20,7) NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "savings_goals_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "bills" (
+    "id" TEXT NOT NULL,
+    "treasuryId" TEXT NOT NULL,
+    "contractBillId" BIGINT,
+    "name" TEXT NOT NULL,
+    "category" "BillCategory" NOT NULL DEFAULT 'OTHER',
+    "payeeName" TEXT NOT NULL,
+    "payeeAddress" TEXT NOT NULL,
+    "amount" DECIMAL(20,7) NOT NULL,
+    "intervalDays" INTEGER NOT NULL,
+    "nextDueAt" TIMESTAMP(3) NOT NULL,
+    "status" "BillStatus" NOT NULL DEFAULT 'UPCOMING',
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "bills_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "withdrawal_requests" (
+    "id" TEXT NOT NULL,
+    "treasuryId" TEXT NOT NULL,
+    "contractWithdrawalId" BIGINT,
+    "requestedByUserId" TEXT NOT NULL,
+    "toAddress" TEXT NOT NULL,
+    "amount" DECIMAL(20,7) NOT NULL,
+    "reason" TEXT,
+    "status" "WithdrawalStatus" NOT NULL DEFAULT 'PENDING',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "withdrawal_requests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "approvals" (
+    "id" TEXT NOT NULL,
+    "withdrawalId" TEXT NOT NULL,
+    "approverId" TEXT NOT NULL,
+    "approvedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "approvals_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "investment_holdings" (
+    "id" TEXT NOT NULL,
+    "treasuryId" TEXT NOT NULL,
+    "assetCode" "AssetCode" NOT NULL,
+    "category" "InvestmentCategory" NOT NULL DEFAULT 'GROWTH',
+    "quantity" DECIMAL(20,7) NOT NULL,
+    "costBasis" DECIMAL(20,7) NOT NULL,
+    "currentValue" DECIMAL(20,7) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "investment_holdings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "inheritance_vaults" (
+    "id" TEXT NOT NULL,
+    "treasuryId" TEXT NOT NULL,
+    "timeLockAt" TIMESTAMP(3) NOT NULL,
+    "deadManSwitchDays" INTEGER NOT NULL,
+    "lastHeartbeatAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "guardianApprovalsRequired" INTEGER NOT NULL DEFAULT 1,
+    "legalNotes" TEXT,
+    "claimed" BOOLEAN NOT NULL DEFAULT false,
+    "claimedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
