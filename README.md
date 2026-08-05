@@ -15,3 +15,20 @@ This is one of three StellarNest repos:
 | [`backend`](https://github.com/StellarNest-Org/backend) *(this repo)* | GraphQL API, Postgres data layer, non-custodial Stellar integration |
 | [`frontend`](https://github.com/StellarNest-Org/frontend) | Marketing site + product preview (Next.js) |
 
+## Table of contents
+
+- [New to this stack? Start here](#new-to-this-stack-start-here)
+- [Stack](#stack)
+- [Architecture](#architecture)
+- [Why an off-chain API at all](#why-an-off-chain-api-at-all)
+- [Non-custodial Stellar flow](#non-custodial-stellar-flow)
+- [Environment variables](#environment-variables)
+- [Getting started](#getting-started)
+- [GraphQL API reference](#graphql-api-reference)
+- [REST: the Stellar signing flow](#rest-the-stellar-signing-flow)
+- [Data model](#data-model)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+
