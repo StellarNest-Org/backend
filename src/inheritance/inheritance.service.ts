@@ -75,3 +75,48 @@ export class InheritanceService {
     });
   }
 
+  async approveClaim(treasuryId: string, userId: string, beneficiaryId: string) {
+    const treasury = await this.requireAccess(treasuryId, userId);
+    const member = await this.families.requireMembership(treasury.familyId, userId);
+    if (member.role !== 'GUARDIAN') {
+      throw new BadRequestException('Only a Guardian can approve an inheritance claim');
+    }
+    const beneficiary = await this.prisma.beneficiary.findUnique({ where: { id: beneficiaryId } });
+    if (!beneficiary) {
+      throw new NotFoundException('Beneficiary not found');
+    }
+    await this.prisma.beneficiary.update({
+      where: { id: beneficiaryId },
+      data: { guardianApproved: true },
+    });
+    return this.getVault(treasuryId, userId);
+  }
+
+  /** True once the time-lock or dead-man switch has elapsed — mirrors the contract's claim condition. */
+  isClaimable(vault: {
+    timeLockAt: Date;
+    deadManSwitchDays: number;
+    lastHeartbeatAt: Date;
+  }): boolean {
+    const now = Date.now();
+    const switchExpired =
+      now - vault.lastHeartbeatAt.getTime() > vault.deadManSwitchDays * 24 * 60 * 60 * 1000;
+    return now >= vault.timeLockAt.getTime() || switchExpired;
+  }
+
+  async markClaimed(treasuryId: string) {
+    return this.prisma.inheritanceVault.update({
+      where: { treasuryId },
+      data: { claimed: true, claimedAt: new Date() },
+    });
+  }
+
+  private async requireAccess(treasuryId: string, userId: string) {
+    const treasury = await this.prisma.treasury.findUnique({ where: { id: treasuryId } });
+    if (!treasury) {
+      throw new NotFoundException('Treasury not found');
+    }
+    await this.families.requireMembership(treasury.familyId, userId);
+    return treasury;
+  }
+}
