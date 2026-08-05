@@ -84,3 +84,30 @@ export class FamiliesService {
     }
     await this.assertAdmin(member.familyId, actingUserId);
 
+    return this.prisma.familyMember.update({
+      where: { id: memberId },
+      data: { role, spendingLimit },
+      include: { user: true },
+    });
+  }
+
+  async assertAdmin(familyId: string, userId: string) {
+    const member = await this.prisma.familyMember.findUnique({
+      where: { familyId_userId: { familyId, userId } },
+    });
+    if (!member || !ADMIN_ROLES.includes(member.role)) {
+      throw new ForbiddenException('Only the Owner or a Parent can perform this action');
+    }
+    return member;
+  }
+
+  async requireMembership(familyId: string, userId: string) {
+    const member = await this.prisma.familyMember.findUnique({
+      where: { familyId_userId: { familyId, userId } },
+    });
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this family');
+    }
+    return member;
+  }
+}
