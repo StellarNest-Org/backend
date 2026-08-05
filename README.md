@@ -119,3 +119,20 @@ have to wait on a ledger round-trip) — but the actual rules (approval
 thresholds, spending limits, inheritance conditions) are enforced by the
 Soroban contract itself, not by this service.
 
+## Why an off-chain API at all
+
+If the contract is the source of truth, why have a backend? Three
+reasons:
+
+1. **Speed.** Rendering a dashboard by simulating a dozen contract calls
+   on every page load doesn't scale. Prisma caches a queryable mirror so
+   `treasuryDashboard` is one aggregation query, not N ledger reads.
+2. **Off-chain-only data.** Bill payee names, legal notes on an
+   inheritance vault, a family's display name — none of this belongs on
+   a public ledger, but it's exactly what a family-facing UI needs.
+3. **Coordination.** Approval requests need somewhere to live *before*
+   they're on-chain (so the UI can show "1 of 2 approvals" as people
+   sign), and the `rules` module's `WithdrawalRequest`/`Approval` models
+   exist for exactly that — a staging area that mirrors, and eventually
+   gets confirmed by, the contract's own pending-withdrawal state.
+
