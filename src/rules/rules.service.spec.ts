@@ -81,3 +81,33 @@ describe('RulesService', () => {
     );
   });
 
+  it('marks a withdrawal approved once required approvals are met', async () => {
+    const pending = {
+      id: 'w1',
+      treasuryId: 't1',
+      status: WithdrawalStatus.PENDING,
+      approvals: [{ approverId: 'parent1' }],
+    };
+    prisma.withdrawalRequest.findUnique.mockResolvedValue(pending);
+    families.requireMembership.mockResolvedValue({ role: 'GUARDIAN' });
+
+    const result = await service.approveWithdrawal('w1', 'guardian1');
+    expect(prisma.withdrawalRequest.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: WithdrawalStatus.APPROVED } }),
+    );
+    expect(result.status).toBe(WithdrawalStatus.APPROVED);
+  });
+
+  it('rejects a second approval from the same approver', async () => {
+    const pending = {
+      id: 'w1',
+      treasuryId: 't1',
+      status: WithdrawalStatus.PENDING,
+      approvals: [{ approverId: 'guardian1' }],
+    };
+    prisma.withdrawalRequest.findUnique.mockResolvedValue(pending);
+    families.requireMembership.mockResolvedValue({ role: 'GUARDIAN' });
+
+    await expect(service.approveWithdrawal('w1', 'guardian1')).rejects.toThrow(ConflictException);
+  });
+});
