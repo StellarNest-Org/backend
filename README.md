@@ -199,3 +199,72 @@ npm run lint       # ESLint (flat config)
 npm run build      # tsc build to dist/
 ```
 
+## GraphQL API reference
+
+All resolvers except `signUp`/`signIn` require a `Bearer` JWT
+(`Authorization: Bearer <token>`), enforced by `JwtAuthGuard`. Below is
+every query and mutation exposed today, grouped by module.
+
+**Auth** (`src/auth`)
+```graphql
+mutation { signUp(input: { email: "amara@family.com", password: "••••••••", displayName: "Amara" }) { accessToken } }
+mutation { signIn(input: { email: "amara@family.com", password: "••••••••" }) { accessToken } }
+```
+
+**Families** (`src/families`)
+```graphql
+query   { myFamilies { id name members { displayName role } } }
+query   { family(id: "fam_1") { id name members { userId role spendingLimit } } }
+mutation{ createFamily(input: { name: "Adeyemi Family" }) { id } }
+mutation{ addFamilyMember(input: { familyId: "fam_1", email: "chidi@family.com", displayName: "Chidi", role: PARENT }) { members { displayName role } } }
+mutation{ updateFamilyMemberRole(input: { memberId: "mem_1", role: GUARDIAN }) { id } }
+```
+
+**Treasury** (`src/treasury`)
+```graphql
+query   { treasuryByFamily(familyId: "fam_1") { id contractAddress balance: approvalThreshold } }
+query   { treasuryDashboard(treasuryId: "trs_1") { totalBalance totalSavings billsDueThisMonth investmentsValue monthlySpending upcomingTransfers inheritanceStatus pendingApprovals } }
+mutation{ createTreasury(input: { familyId: "fam_1", name: "Adeyemi Family Treasury", assetCode: USDC, approvalThreshold: 1000, requiredApprovals: 2 }) { id } }
+mutation{ recordOnChainTreasury(input: { treasuryId: "trs_1", contractTreasuryId: "1", contractAddress: "C..." }) { id } }
+mutation{ setTreasuryFrozen(treasuryId: "trs_1", frozen: true) { frozen } }
+```
+
+**Rules** (`src/rules`) — withdrawal approvals and automations
+```graphql
+query   { withdrawalRequests(treasuryId: "trs_1") { id amount status approvalCount } }
+mutation{ requestWithdrawal(input: { treasuryId: "trs_1", toAddress: "G...", amount: 500, reason: "Rent" }) { id status } }
+mutation{ approveWithdrawal(withdrawalId: "wd_1") { status approvalCount } }
+mutation{ setApprovalRule(input: { treasuryId: "trs_1", approvalThreshold: 1000, requiredApprovals: 2 }) }
+query   { automations(treasuryId: "trs_1") { id type description nextRunAt active } }
+mutation{ createAutomation(input: { treasuryId: "trs_1", type: RECURRING_SAVINGS, description: "Save $200 every payday", amount: 200, intervalDays: 14 }) { id } }
+mutation{ toggleAutomation(automationId: "auto_1", active: false) { active } }
+```
+
+**Savings goals** (`src/savings-goals`)
+```graphql
+query   { savingsGoals(treasuryId: "trs_1") { id name targetAmount currentAmount progress } }
+mutation{ createSavingsGoal(input: { treasuryId: "trs_1", name: "Emergency Fund", category: EMERGENCY_FUND, targetAmount: 5000 }) { id } }
+mutation{ contributeToGoal(input: { goalId: "goal_1", amount: 250 }) { currentAmount progress } }
+```
+
+**Bills** (`src/bills`)
+```graphql
+query   { bills(treasuryId: "trs_1") { id name category amount nextDueAt status } }
+mutation{ createBill(input: { treasuryId: "trs_1", name: "Rent", category: RENT, payeeName: "Landlord", payeeAddress: "G...", amount: 2200, intervalDays: 30 }) { id } }
+mutation{ cancelBill(billId: "bill_1") { active status } }
+```
+
+**Investments** (`src/investments`)
+```graphql
+query   { portfolio(treasuryId: "trs_1") { totalValue totalProfitLoss totalProfitLossPercent holdings { assetCode category currentValue profitLoss } } }
+mutation{ addInvestmentHolding(input: { treasuryId: "trs_1", assetCode: XLM, category: GROWTH, quantity: 10000, costBasis: 4200, currentValue: 5100 }) { id profitLoss } }
+```
+
+**Inheritance** (`src/inheritance`)
+```graphql
+query   { inheritanceVault(treasuryId: "trs_1") { timeLockAt deadManSwitchDays claimed beneficiaries { name allocationBps guardianApproved } } }
+mutation{ createInheritanceVault(input: { treasuryId: "trs_1", timeLockAt: "2040-01-01T00:00:00Z", deadManSwitchDays: 365, guardianApprovalsRequired: 1, beneficiaries: [{ name: "Zainab", stellarAddress: "G...", allocationBps: 5000 }, { name: "Kene", stellarAddress: "G...", allocationBps: 5000 }] }) { id } }
+mutation{ sendInheritanceHeartbeat(treasuryId: "trs_1") { lastHeartbeatAt } }
+mutation{ approveInheritanceClaim(treasuryId: "trs_1", beneficiaryId: "ben_1") { beneficiaries { guardianApproved } } }
+```
+
