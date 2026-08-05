@@ -86,3 +86,68 @@ export class StellarService {
       .setTimeout(30)
       .build();
 
+    const simulated = await this.server.simulateTransaction(transaction);
+    if (rpc.Api.isSimulationError(simulated)) {
+      throw new Error(`Simulation failed: ${simulated.error}`);
+    }
+    if (!simulated.result) {
+      throw new Error('Simulation returned no result');
+    }
+    return scValToNative(simulated.result.retval) as T;
+  }
+
+  // --- ScVal argument builders for each treasury contract method ---
+
+  createTreasuryArgs(
+    owner: string,
+    name: string,
+    asset: string,
+    threshold: string,
+    requiredApprovals: number,
+  ) {
+    return [
+      new Address(owner).toScVal(),
+      nativeToScVal(name, { type: 'string' }),
+      new Address(asset).toScVal(),
+      nativeToScVal(threshold, { type: 'i128' }),
+      nativeToScVal(requiredApprovals, { type: 'u32' }),
+    ];
+  }
+
+  depositArgs(treasuryId: string, from: string, amount: string) {
+    return [
+      nativeToScVal(treasuryId, { type: 'u64' }),
+      new Address(from).toScVal(),
+      nativeToScVal(amount, { type: 'i128' }),
+    ];
+  }
+
+  requestWithdrawalArgs(treasuryId: string, caller: string, to: string, amount: string) {
+    return [
+      nativeToScVal(treasuryId, { type: 'u64' }),
+      new Address(caller).toScVal(),
+      new Address(to).toScVal(),
+      nativeToScVal(amount, { type: 'i128' }),
+    ];
+  }
+
+  approveWithdrawalArgs(withdrawalId: string, approver: string) {
+    return [nativeToScVal(withdrawalId, { type: 'u64' }), new Address(approver).toScVal()];
+  }
+
+  contributeToGoalArgs(goalId: string, from: string, amount: string) {
+    return [
+      nativeToScVal(goalId, { type: 'u64' }),
+      new Address(from).toScVal(),
+      nativeToScVal(amount, { type: 'i128' }),
+    ];
+  }
+
+  heartbeatArgs(treasuryId: string, caller: string) {
+    return [nativeToScVal(treasuryId, { type: 'u64' }), new Address(caller).toScVal()];
+  }
+
+  claimInheritanceArgs(treasuryId: string, caller: string) {
+    return [nativeToScVal(treasuryId, { type: 'u64' }), new Address(caller).toScVal()];
+  }
+}
