@@ -299,3 +299,26 @@ encode arguments for: `create_treasury`, `deposit`,
 `heartbeat`, `claim_inheritance` (see
 `src/stellar/dto/build-invocation.dto.ts`).
 
+## Data model
+
+See `prisma/schema.prisma` for the full model. Money fields are
+`Decimal(20, 7)` to avoid floating-point drift (matching Stellar's 7
+decimal places of precision); roles (`FamilyRole`) and asset codes
+(`AssetCode`: `XLM`, `USDC`, `EURC`, `AQUA`, `CUSTOM`) are Postgres enums
+shared between the GraphQL schema and the database via `@prisma/client`.
+
+```
+User ──< FamilyMember >── Family ── Treasury ──< SavingsGoal
+                                        │      ├─< Bill
+                                        │      ├─< WithdrawalRequest >── Approval
+                                        │      ├─< InvestmentHolding
+                                        │      ├─< Automation
+                                        │      ├─< AuditLog
+                                        │      └── InheritanceVault ──< Beneficiary
+```
+
+`Treasury.contractTreasuryId` / `contractAddress` link an off-chain row
+to its on-chain counterpart once `recordOnChainTreasury` confirms
+deployment; both are nullable because a treasury can exist off-chain
+briefly before its on-chain creation transaction confirms.
+
