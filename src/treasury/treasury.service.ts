@@ -81,3 +81,55 @@ export class TreasuryService {
     const now = new Date();
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
+    const [
+      goals,
+      dueBills,
+      investments,
+      upcomingTransfers,
+      pendingApprovals,
+      vault,
+      monthlyWithdrawals,
+    ] = await Promise.all([
+      this.prisma.savingsGoal.findMany({ where: { treasuryId } }),
+      this.prisma.bill.aggregate({
+        where: { treasuryId, active: true, nextDueAt: { lte: endOfMonth } },
+        _sum: { amount: true },
+      }),
+      this.prisma.investmentHolding.aggregate({
+        where: { treasuryId },
+        _sum: { currentValue: true },
+      }),
+      this.prisma.bill.count({ where: { treasuryId, active: true, nextDueAt: { gte: now } } }),
+      this.prisma.withdrawalRequest.count({
+        where: { treasuryId, status: WithdrawalStatus.PENDING },
+      }),
+      this.prisma.inheritanceVault.findUnique({ where: { treasuryId } }),
+      this.prisma.withdrawalRequest.aggregate({
+        where: {
+          treasuryId,
+          status: WithdrawalStatus.EXECUTED,
+          createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
+        },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const totalSavings = goals.reduce((sum, g) => sum + Number(g.currentAmount), 0);
+
+    return {
+      totalBalance: Number(treasury.balance),
+      totalSavings,
+      billsDueThisMonth: Number(dueBills._sum.amount ?? 0),
+      investmentsValue: Number(investments._sum.currentValue ?? 0),
+      monthlySpending: Number(monthlyWithdrawals._sum.amount ?? 0),
+      upcomingTransfers,
+      inheritanceStatus: vault ? (vault.claimed ? 'Claimed' : 'Active') : 'Not configured',
+      pendingApprovals,
+    };
+  }
+
+  /** Called by the chain-sync worker after confirming an on-chain balance-changing event. */
+  async syncBalance(treasuryId: string, balance: number) {
+    return this.prisma.treasury.update({ where: { id: treasuryId }, data: { balance } });
+  }
+}
