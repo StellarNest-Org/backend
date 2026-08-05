@@ -88,3 +88,71 @@ export class RulesService {
     await this.prisma.approval.create({ data: { withdrawalId, approverId: userId } });
     const approvalCount = withdrawal.approvals.length + 1;
 
+    if (approvalCount >= treasury.requiredApprovals) {
+      return this.prisma.withdrawalRequest.update({
+        where: { id: withdrawalId },
+        data: { status: WithdrawalStatus.APPROVED },
+        include: { approvals: true },
+      });
+    }
+    return this.prisma.withdrawalRequest.findUniqueOrThrow({
+      where: { id: withdrawalId },
+      include: { approvals: true },
+    });
+  }
+
+  /** Marks a withdrawal executed once the on-chain transaction has been confirmed. */
+  async markExecuted(withdrawalId: string) {
+    return this.prisma.withdrawalRequest.update({
+      where: { id: withdrawalId },
+      data: { status: WithdrawalStatus.EXECUTED },
+    });
+  }
+
+  async listAutomations(treasuryId: string, userId: string) {
+    await this.requireAccess(treasuryId, userId);
+    return this.prisma.automation.findMany({
+      where: { treasuryId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createAutomation(
+    treasuryId: string,
+    userId: string,
+    type: AutomationType,
+    description: string,
+    amount?: number,
+    intervalDays?: number,
+  ) {
+    const treasury = await this.requireAccess(treasuryId, userId);
+    await this.families.assertAdmin(treasury.familyId, userId);
+    const nextRunAt = intervalDays
+      ? new Date(Date.now() + intervalDays * 24 * 60 * 60 * 1000)
+      : undefined;
+    return this.prisma.automation.create({
+      data: { treasuryId, type, description, amount, intervalDays, nextRunAt },
+    });
+  }
+
+  async toggleAutomation(automationId: string, userId: string, active: boolean) {
+    const automation = await this.prisma.automation.findUnique({ where: { id: automationId } });
+    if (!automation) {
+      throw new NotFoundException('Automation not found');
+    }
+    const treasury = await this.prisma.treasury.findUniqueOrThrow({
+      where: { id: automation.treasuryId },
+    });
+    await this.families.assertAdmin(treasury.familyId, userId);
+    return this.prisma.automation.update({ where: { id: automationId }, data: { active } });
+  }
+
+  private async requireAccess(treasuryId: string, userId: string) {
+    const treasury = await this.prisma.treasury.findUnique({ where: { id: treasuryId } });
+    if (!treasury) {
+      throw new NotFoundException('Treasury not found');
+    }
+    await this.families.requireMembership(treasury.familyId, userId);
+    return treasury;
+  }
+}
