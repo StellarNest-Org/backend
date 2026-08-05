@@ -88,3 +88,34 @@ Prisma 6 / PostgreSQL · `@stellar/stellar-sdk` 16 · JWT auth
 bill-reminder jobs · `class-validator` / `class-transformer` for input
 validation.
 
+## Architecture
+
+```
+src/
+  auth/            signup/signin, JWT issuance, Stellar address linking
+  families/        family creation, membership, role assignment
+  treasury/        treasury metadata, dashboard aggregation, freeze toggle
+  rules/           withdrawal requests/approvals, automations (rules engine)
+  savings-goals/   named savings goals with progress tracking
+  bills/           recurring bills, due/overdue reminder cron
+  investments/     investment holdings + portfolio profit/loss
+  inheritance/     inheritance vault, beneficiaries, dead-man switch
+  stellar/         non-custodial XDR builder + submitter for the treasury contract
+  prisma/          PrismaService (a thin, injectable wrapper over @prisma/client)
+```
+
+Each feature module follows the same shape: a `*.service.ts` with the
+actual Prisma queries and authorization checks, a `*.resolver.ts`
+exposing it over GraphQL, `dto/` input types (validated with
+`class-validator`), and `models/` GraphQL output types. `families` is a
+dependency of almost every other module — most write operations check
+`FamiliesService.assertAdmin()` (Owner/Parent) or
+`FamiliesService.requireMembership()` before touching data.
+
+Every module that touches money defers final authority to the on-chain
+`treasury` contract: this API keeps a fast, queryable **off-chain mirror**
+of on-chain state (for dashboards, notifications, and UX that shouldn't
+have to wait on a ledger round-trip) — but the actual rules (approval
+thresholds, spending limits, inheritance conditions) are enforced by the
+Soroban contract itself, not by this service.
+
