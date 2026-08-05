@@ -175,3 +175,84 @@ model Bill {
 
   treasury         Treasury     @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
 
+  @@map("bills")
+}
+
+model WithdrawalRequest {
+  id                    String           @id @default(cuid())
+  treasuryId            String
+  contractWithdrawalId  BigInt?
+  requestedByUserId     String
+  toAddress             String
+  amount                Decimal          @db.Decimal(20, 7)
+  reason                String?
+  status                WithdrawalStatus @default(PENDING)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  treasury              Treasury         @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+  approvals             Approval[]
+
+  @@map("withdrawal_requests")
+}
+
+model Approval {
+  id            String            @id @default(cuid())
+  withdrawalId  String
+  approverId    String
+  approvedAt    DateTime          @default(now())
+
+  withdrawal    WithdrawalRequest @relation(fields: [withdrawalId], references: [id], onDelete: Cascade)
+
+  @@unique([withdrawalId, approverId])
+  @@map("approvals")
+}
+
+model InvestmentHolding {
+  id           String             @id @default(cuid())
+  treasuryId   String
+  assetCode    AssetCode
+  category     InvestmentCategory @default(GROWTH)
+  quantity     Decimal            @db.Decimal(20, 7)
+  costBasis    Decimal            @db.Decimal(20, 7)
+  currentValue Decimal            @db.Decimal(20, 7)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  treasury     Treasury           @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+
+  @@map("investment_holdings")
+}
+
+model InheritanceVault {
+  id                        String        @id @default(cuid())
+  treasuryId                String        @unique
+  timeLockAt                DateTime
+  deadManSwitchDays         Int
+  lastHeartbeatAt           DateTime      @default(now())
+  guardianApprovalsRequired Int           @default(1)
+  legalNotes                String?
+  claimed                   Boolean       @default(false)
+  claimedAt                 DateTime?
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+
+  treasury                  Treasury      @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+  beneficiaries              Beneficiary[]
+
+  @@map("inheritance_vaults")
+}
+
+model Beneficiary {
+  id               String           @id @default(cuid())
+  vaultId          String
+  name             String
+  stellarAddress   String
+  allocationBps    Int
+  guardianApproved Boolean          @default(false)
+
+  vault            InheritanceVault @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+
+  @@map("beneficiaries")
+}
+
