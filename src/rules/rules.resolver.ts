@@ -74,3 +74,76 @@ export class RulesResolver {
     return list.map(toWithdrawalModel);
   }
 
+  @Mutation(() => WithdrawalRequestModel)
+  async requestWithdrawal(
+    @Args('input') input: RequestWithdrawalInput,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const w = await this.rules.requestWithdrawal(
+      input.treasuryId,
+      user.userId,
+      input.toAddress,
+      input.amount,
+      input.reason,
+    );
+    return toWithdrawalModel(w);
+  }
+
+  @Mutation(() => WithdrawalRequestModel)
+  async approveWithdrawal(
+    @Args('withdrawalId') withdrawalId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const w = await this.rules.approveWithdrawal(withdrawalId, user.userId);
+    return toWithdrawalModel(w);
+  }
+
+  @Mutation(() => Boolean)
+  async setApprovalRule(
+    @Args('input') input: SetApprovalRuleInput,
+    @CurrentUser() user: { userId: string },
+  ) {
+    await this.treasury.setApprovalRule(
+      user.userId,
+      input.treasuryId,
+      input.approvalThreshold,
+      input.requiredApprovals,
+    );
+    return true;
+  }
+
+  @Query(() => [AutomationModel])
+  async automations(
+    @Args('treasuryId') treasuryId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const list = await this.rules.listAutomations(treasuryId, user.userId);
+    return list.map(toAutomationModel);
+  }
+
+  @Mutation(() => AutomationModel)
+  async createAutomation(
+    @Args('input') input: CreateAutomationInput,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const automation = await this.rules.createAutomation(
+      input.treasuryId,
+      user.userId,
+      input.type,
+      input.description,
+      input.amount,
+      input.intervalDays,
+    );
+    return toAutomationModel(automation);
+  }
+
+  @Mutation(() => AutomationModel)
+  async toggleAutomation(
+    @Args('automationId') automationId: string,
+    @Args('active') active: boolean,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const automation = await this.rules.toggleAutomation(automationId, user.userId, active);
+    return toAutomationModel(automation);
+  }
+}
