@@ -346,3 +346,18 @@ npm test
 npm run test:cov   # with coverage
 ```
 
+## Deployment
+
+```bash
+docker build -t stellarnest-backend .
+docker run -p 4000:4000 --env-file .env stellarnest-backend
+```
+
+The `Dockerfile` is a two-stage build: `npm ci` + `prisma generate` +
+`npm run build` in the build stage, then a slim runtime image with only
+production dependencies and the compiled `dist/`. Run
+`npx prisma migrate deploy` against your production `DATABASE_URL`
+before starting the container for the first time. `.github/workflows/ci.yml`
+runs lint, unit tests, and a build against a throwaway Postgres service
+container on every push/PR.
+
