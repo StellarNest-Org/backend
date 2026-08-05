@@ -160,3 +160,18 @@ transactions against the deployed `treasury` contract.
                                                                                 └──────────────┘
 ```
 
+## Environment variables
+
+See `.env.example` for the full list. The important ones:
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Postgres connection string used by Prisma |
+| `JWT_SECRET` | Signs and verifies session JWTs |
+| `SOROBAN_RPC_URL` | Soroban RPC endpoint (defaults to Stellar's public testnet RPC) |
+| `STELLAR_NETWORK_PASSPHRASE` | Network passphrase used when building/submitting transactions |
+| `TREASURY_CONTRACT_ID` | The deployed `treasury` contract's id — see [`contracts`](https://github.com/StellarNest-Org/contracts) |
+| `STELLAR_READ_SOURCE_ACCOUNT` | A funded account used as the simulation source for read-only contract calls |
+| `CORS_ORIGIN` | Comma-separated list of allowed origins (defaults to the frontend's dev URL) |
+| `PORT` | HTTP port (default `4000`) |
+
