@@ -170,3 +170,93 @@ CREATE TABLE "inheritance_vaults" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
+    CONSTRAINT "inheritance_vaults_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "beneficiaries" (
+    "id" TEXT NOT NULL,
+    "vaultId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "stellarAddress" TEXT NOT NULL,
+    "allocationBps" INTEGER NOT NULL,
+    "guardianApproved" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "beneficiaries_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "automations" (
+    "id" TEXT NOT NULL,
+    "treasuryId" TEXT NOT NULL,
+    "type" "AutomationType" NOT NULL,
+    "description" TEXT NOT NULL,
+    "amount" DECIMAL(20,7),
+    "intervalDays" INTEGER,
+    "nextRunAt" TIMESTAMP(3),
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "automations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "audit_logs" (
+    "id" TEXT NOT NULL,
+    "treasuryId" TEXT,
+    "userId" TEXT,
+    "action" TEXT NOT NULL,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_stellarPublicKey_key" ON "users"("stellarPublicKey");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_passkeyCredentialId_key" ON "users"("passkeyCredentialId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "family_members_familyId_userId_key" ON "family_members"("familyId", "userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "treasuries_familyId_key" ON "treasuries"("familyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "treasuries_contractTreasuryId_key" ON "treasuries"("contractTreasuryId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "approvals_withdrawalId_approverId_key" ON "approvals"("withdrawalId", "approverId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "inheritance_vaults_treasuryId_key" ON "inheritance_vaults"("treasuryId");
+
+-- AddForeignKey
+ALTER TABLE "family_members" ADD CONSTRAINT "family_members_familyId_fkey" FOREIGN KEY ("familyId") REFERENCES "families"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "family_members" ADD CONSTRAINT "family_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "treasuries" ADD CONSTRAINT "treasuries_familyId_fkey" FOREIGN KEY ("familyId") REFERENCES "families"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "savings_goals" ADD CONSTRAINT "savings_goals_treasuryId_fkey" FOREIGN KEY ("treasuryId") REFERENCES "treasuries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bills" ADD CONSTRAINT "bills_treasuryId_fkey" FOREIGN KEY ("treasuryId") REFERENCES "treasuries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "withdrawal_requests" ADD CONSTRAINT "withdrawal_requests_treasuryId_fkey" FOREIGN KEY ("treasuryId") REFERENCES "treasuries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "approvals" ADD CONSTRAINT "approvals_withdrawalId_fkey" FOREIGN KEY ("withdrawalId") REFERENCES "withdrawal_requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "investment_holdings" ADD CONSTRAINT "investment_holdings_treasuryId_fkey" FOREIGN KEY ("treasuryId") REFERENCES "treasuries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
