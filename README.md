@@ -373,3 +373,11 @@ container on every push/PR.
   `TREASURY_CONTRACT_ID` isn't set to a real deployed contract, or
   `STELLAR_READ_SOURCE_ACCOUNT` isn't funded on the target network.
 
+## Contributing
+
+Issues and PRs are welcome. Before opening a PR: `npm run lint`,
+`npm test`, and `npm run build` should all pass. See
+[`StellarNest-Org/contracts`](https://github.com/StellarNest-Org/contracts)
+for the on-chain rules this API defers to, and
+[`StellarNest-Org/frontend`](https://github.com/StellarNest-Org/frontend)
+for the client that consumes this API.
