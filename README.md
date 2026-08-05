@@ -322,3 +322,27 @@ to its on-chain counterpart once `recordOnChainTreasury` confirms
 deployment; both are nullable because a treasury can exist off-chain
 briefly before its on-chain creation transaction confirms.
 
+## Testing
+
+26 Jest unit tests across five spec files, all with `PrismaService` and
+`FamiliesService` mocked (no database needed to run them):
+
+- `auth.service.spec.ts` — sign-up conflict handling, password hashing,
+  sign-in success/failure
+- `families.service.spec.ts` — `assertAdmin` allows Owner/Parent, rejects
+  every other role and non-members
+- `rules.service.spec.ts` — auto-execute below threshold vs. pending
+  above it, frozen-treasury blocking, child spending-limit enforcement,
+  viewer rejection, approval-count-triggers-execution, duplicate-approval
+  rejection
+- `savings-goals.service.spec.ts` — admin-only goal creation, contribution
+  increments
+- `inheritance.service.spec.ts` — allocation-sum validation, owner-only
+  vault creation, `isClaimable` under time-lock / dead-man-switch /
+  neither
+
+```bash
+npm test
+npm run test:cov   # with coverage
+```
+
