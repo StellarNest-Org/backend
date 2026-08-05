@@ -74,3 +74,35 @@ export class BillsService {
     const now = new Date();
     const dueWindow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
+    const [dueCount, overdueCount] = await Promise.all([
+      this.prisma.bill.updateMany({
+        where: {
+          active: true,
+          nextDueAt: { lte: dueWindow, gt: now },
+          status: BillStatus.UPCOMING,
+        },
+        data: { status: BillStatus.DUE },
+      }),
+      this.prisma.bill.updateMany({
+        where: {
+          active: true,
+          nextDueAt: { lt: now },
+          status: { in: [BillStatus.UPCOMING, BillStatus.DUE] },
+        },
+        data: { status: BillStatus.OVERDUE },
+      }),
+    ]);
+    this.logger.log(
+      `Bill reminders refreshed: ${dueCount.count} due, ${overdueCount.count} overdue`,
+    );
+  }
+
+  private async requireAccess(treasuryId: string, userId: string) {
+    const treasury = await this.prisma.treasury.findUnique({ where: { id: treasuryId } });
+    if (!treasury) {
+      throw new NotFoundException('Treasury not found');
+    }
+    await this.families.requireMembership(treasury.familyId, userId);
+    return treasury;
+  }
+}
