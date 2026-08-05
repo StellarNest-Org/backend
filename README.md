@@ -32,3 +32,51 @@ This is one of three StellarNest repos:
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 
+## New to this stack? Start here
+
+A few concepts recur throughout this codebase. If any of these are new
+to you, this section should be enough to follow the rest of the README:
+
+- **NestJS** is a backend framework for Node.js/TypeScript, structured
+  around **modules** (a feature area, e.g. `families/`), **services**
+  (where the actual logic and database queries live), and either
+  **controllers** (for REST endpoints) or **resolvers** (for GraphQL).
+  If you've used Angular, the pattern — classes, decorators like
+  `@Injectable()`, and dependency injection via constructor parameters —
+  will feel familiar; it's explicitly modeled on it.
+- **GraphQL** is an alternative to a typical REST API. Instead of many
+  fixed endpoints (`GET /families/:id`, `GET /families/:id/members`,
+  ...), there's a single endpoint (`/graphql`) and the client sends a
+  **query** describing exactly which fields it wants back — so a mobile
+  app and a web dashboard can each ask for only what they need from the
+  same API, in one request instead of several. A **query** reads data; a
+  **mutation** changes it. This project's schema is **code-first**:
+  instead of writing GraphQL's schema language by hand, you write normal
+  TypeScript classes with `@ObjectType()`/`@Field()`/`@InputType()`
+  decorators (see any file under `models/` or `dto/`), and NestJS
+  generates the schema from them automatically into `src/schema.gql`.
+- **Prisma** is an ORM (object-relational mapper) — it turns the models
+  defined in `prisma/schema.prisma` into a fully-typed TypeScript client
+  (`this.prisma.family.findMany(...)`) instead of hand-written SQL, and
+  manages schema changes over time as versioned **migrations**
+  (`prisma/migrations/`).
+- **JWT (JSON Web Token)** is how a logged-in user stays logged in
+  between requests without the server keeping a session in memory: after
+  `signIn`, the client gets back a signed token, sends it as
+  `Authorization: Bearer <token>` on every future request, and
+  `JwtAuthGuard`/`JwtStrategy` verify that signature to know who's
+  calling — see `src/auth/`.
+- **Why GraphQL *and* two plain REST endpoints?** `/stellar/build` and
+  `/stellar/submit` move a raw XDR string (Stellar's binary-ish
+  transaction format, base64-encoded) — there's no meaningful "pick
+  which fields you want" for a blob of bytes, so a plain REST endpoint
+  is simpler than forcing it through GraphQL's type system. Everything
+  else — families, treasuries, savings goals, and so on — is
+  structured data that benefits from GraphQL's field-selection.
+- **"Non-custodial"** means this backend is never able to move a
+  family's funds on its own, because it never has the private key that
+  could authorize that. See [Non-custodial Stellar flow](#non-custodial-stellar-flow)
+  below for exactly how that works, and the
+  [contracts README's glossary](https://github.com/StellarNest-Org/contracts#new-to-stellarsoroban-start-here)
+  for Stellar/Soroban-specific terms like XDR, ledger, and contract id.
+
