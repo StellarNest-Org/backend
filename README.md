@@ -80,3 +80,11 @@ to you, this section should be enough to follow the rest of the README:
   [contracts README's glossary](https://github.com/StellarNest-Org/contracts#new-to-stellarsoroban-start-here)
   for Stellar/Soroban-specific terms like XDR, ledger, and contract id.
 
+## Stack
+
+NestJS 11 · GraphQL (code-first, Apollo Server 5 via `@nestjs/apollo`) ·
+Prisma 6 / PostgreSQL · `@stellar/stellar-sdk` 16 · JWT auth
+(`passport-jwt`, `bcryptjs`) · `@nestjs/schedule` for recurring
+bill-reminder jobs · `class-validator` / `class-transformer` for input
+validation.
+
