@@ -268,3 +268,34 @@ mutation{ sendInheritanceHeartbeat(treasuryId: "trs_1") { lastHeartbeatAt } }
 mutation{ approveInheritanceClaim(treasuryId: "trs_1", beneficiaryId: "ben_1") { beneficiaries { guardianApproved } } }
 ```
 
+## REST: the Stellar signing flow
+
+Two endpoints, both behind `JwtAuthGuard`, live outside GraphQL because
+they move raw XDR strings rather than typed objects:
+
+```http
+POST /stellar/build
+Content-Type: application/json
+
+{
+  "sourcePublicKey": "GABC...",
+  "method": "request_withdrawal",
+  "args": ["1", "GDEST...", "50000000"]
+}
+→ { "xdr": "AAAAAg..." }
+```
+
+```http
+POST /stellar/submit
+Content-Type: application/json
+
+{ "signedXdr": "AAAAAg..." }
+→ { "hash": "abcd1234...", "status": "SUCCESS" }
+```
+
+`method` must be one of the contract calls `StellarService` knows how to
+encode arguments for: `create_treasury`, `deposit`,
+`request_withdrawal`, `approve_withdrawal`, `contribute_to_goal`,
+`heartbeat`, `claim_inheritance` (see
+`src/stellar/dto/build-invocation.dto.ts`).
+
