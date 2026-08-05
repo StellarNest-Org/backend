@@ -87,3 +87,91 @@ model User {
   @@map("users")
 }
 
+model Family {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     FamilyMember[]
+  treasury    Treasury?
+
+  @@map("families")
+}
+
+model FamilyMember {
+  id             String     @id @default(cuid())
+  familyId       String
+  userId         String
+  role           FamilyRole
+  spendingLimit  Decimal?   @db.Decimal(20, 7)
+  joinedAt       DateTime   @default(now())
+
+  family         Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, userId])
+  @@map("family_members")
+}
+
+model Treasury {
+  id                   String   @id @default(cuid())
+  familyId             String   @unique
+  contractTreasuryId   BigInt?  @unique
+  contractAddress      String?
+  name                 String
+  assetCode            AssetCode
+  assetIssuer          String?
+  balance              Decimal  @default(0) @db.Decimal(20, 7)
+  approvalThreshold    Decimal  @db.Decimal(20, 7)
+  requiredApprovals    Int      @default(1)
+  frozen               Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  family               Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  savingsGoals         SavingsGoal[]
+  bills                Bill[]
+  withdrawals          WithdrawalRequest[]
+  investments          InvestmentHolding[]
+  inheritanceVault     InheritanceVault?
+  automations          Automation[]
+  auditLogs            AuditLog[]
+
+  @@map("treasuries")
+}
+
+model SavingsGoal {
+  id             String       @id @default(cuid())
+  treasuryId     String
+  contractGoalId BigInt?
+  name           String
+  category       GoalCategory @default(OTHER)
+  targetAmount   Decimal      @db.Decimal(20, 7)
+  currentAmount  Decimal      @default(0) @db.Decimal(20, 7)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  treasury       Treasury     @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+
+  @@map("savings_goals")
+}
+
+model Bill {
+  id               String       @id @default(cuid())
+  treasuryId       String
+  contractBillId   BigInt?
+  name             String
+  category         BillCategory @default(OTHER)
+  payeeName        String
+  payeeAddress     String
+  amount           Decimal      @db.Decimal(20, 7)
+  intervalDays     Int
+  nextDueAt        DateTime
+  status           BillStatus   @default(UPCOMING)
+  active           Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  treasury         Treasury     @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+
