@@ -175,3 +175,27 @@ See `.env.example` for the full list. The important ones:
 | `CORS_ORIGIN` | Comma-separated list of allowed origins (defaults to the frontend's dev URL) |
 | `PORT` | HTTP port (default `4000`) |
 
+## Getting started
+
+```bash
+cp .env.example .env
+docker compose up -d          # starts Postgres 16 on localhost:5432
+npm install
+npx prisma generate           # generates the Prisma client from schema.prisma
+npx prisma migrate deploy     # applies prisma/migrations
+npm run start:dev             # http://localhost:4000/graphql
+```
+
+`npm run start:dev` runs Nest in watch mode. The GraphQL schema is
+generated **code-first** — written as TypeScript decorators in each
+module's resolver/model files, not hand-authored SDL — and printed to
+`src/schema.gql` on boot (gitignored; regenerated every start). Open
+`http://localhost:4000/graphql` for the interactive Apollo sandbox once
+the server is running.
+
+```bash
+npm test          # unit tests (Jest, Prisma mocked — no DB required)
+npm run lint       # ESLint (flat config)
+npm run build      # tsc build to dist/
+```
+
