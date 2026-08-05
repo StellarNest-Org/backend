@@ -256,3 +256,32 @@ model Beneficiary {
   @@map("beneficiaries")
 }
 
+model Automation {
+  id             String         @id @default(cuid())
+  treasuryId     String
+  type           AutomationType
+  description    String
+  amount         Decimal?       @db.Decimal(20, 7)
+  intervalDays   Int?
+  nextRunAt      DateTime?
+  active         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+
+  treasury       Treasury       @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+
+  @@map("automations")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  treasuryId  String?
+  userId      String?
+  action      String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  treasury    Treasury? @relation(fields: [treasuryId], references: [id], onDelete: SetNull)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
