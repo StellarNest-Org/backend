@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FamilyRole {
+  OWNER
+  PARENT
+  GUARDIAN
+  CHILD
+  ADVISOR
+  VIEWER
+}
+
+enum AssetCode {
+  XLM
+  USDC
+  EURC
+  AQUA
+  CUSTOM
+}
+
+enum GoalCategory {
+  EMERGENCY_FUND
+  VACATION
+  HOUSE_PURCHASE
+  EDUCATION_FUND
+  OTHER
+}
+
+enum BillCategory {
+  ELECTRICITY
+  RENT
+  INTERNET
+  SCHOOL_FEES
+  INSURANCE
+  OTHER
+}
+
+enum BillStatus {
+  UPCOMING
+  DUE
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  EXECUTED
+  REJECTED
+}
+
+enum InvestmentCategory {
+  STABLE
+  GROWTH
+  YIELD
+  EXPERIMENTAL
+}
+
+enum AutomationType {
+  RECURRING_SAVINGS
+  ALLOWANCE
+  BILL_PAYMENT
+  PROFIT_DISTRIBUTION
+  INHERITANCE_RELEASE
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String?
+  displayName   String
+  stellarPublicKey String? @unique
+  passkeyCredentialId String? @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  memberships   FamilyMember[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
